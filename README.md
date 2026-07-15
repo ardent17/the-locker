@@ -17,10 +17,10 @@ A small RAG app built around these principles:
 - Keeping documents local
 - Keeping one upload from bleeding into the next
 - Checking what retrieval actually found
-- Refusing when there is not enough evidence
+- Admitting when there is not enough evidence to answer
 - Making the state of the app visible instead of magical
 
-This is not an "AI archive platform" and it is not claiming the model is a source of truth. It is a local retrieval tool with boundaries.
+It only answers from the file you gave it, right now. Nothing is saved, nothing is inherited from past documents.
 
 ## What it does
 
@@ -36,7 +36,7 @@ This is not an "AI archive platform" and it is not claiming the model is a sourc
 
 ## The rule
 
-If The Locker cannot find enough evidence in the active file, it should say:
+If The Locker can't find enough evidence in the active file, it should say:
 
 ```text
 NO RECEIPTS IN THIS LOCKER.
@@ -49,14 +49,14 @@ I couldn't verify that from the active file.
 The point is that this runs on your machine.
 
 - Ollama runs locally
-- No cloud LLM API key is required
+- No cloud LLM API key required
 - Each upload is fingerprinted with a local SHA-256 hash — used only to detect when the active file has changed, never transmitted or logged
 - Uploads are only written to a temporary local file while they are parsed
 - That temporary file is deleted after indexing
 - Vector data stays **in memory only** — there's no `persist_directory` set, so every collection is gone the moment the Streamlit process restarts, not just when you hit "Empty Locker"
 - Clearing the locker deletes the active collection and chat history
 
-*caveat* That does not mean "secure in every imaginable deployment." Do not put a locally running app full of private documents on the public internet.
+*caveat* That does not mean "secure in every imaginable deployment." Please don't tunnel this onto the public internet (ngrok, port forwarding, etc.) without adding auth in front of it. I believe in you, but still.
 
 ## Setup
 
@@ -103,8 +103,6 @@ Windows PowerShell:
 pip install -r requirements.txt
 ```
 
-Requirements: see `requirements.txt`
-
 ### 5. Run it
 
 ```bash
@@ -127,7 +125,9 @@ http://localhost:8501
 | Excel workbook | `.xlsx` | UnstructuredExcelLoader |
 | Plain text | `.txt` | TextLoader |
 
-## Test the actual point
+## Test file isolation
+
+This only matters if you've modified `app.py`. On a fresh clone this will always pass — use it to confirm you haven't broken document isolation while changing the upload logic.
 
 Make two files with conflicting information.
 
@@ -146,14 +146,14 @@ The locker combination is 03-11-02.
 Then:
 
 1. Upload `test-a.txt`
-2. Ask: `What is the locker combination?`
+2. Ask: `What is the locker combination?` or some variation thereof
 3. Upload `test-b.txt`
 4. Ask the same question
 5. Confirm the answer is `03-11-02`
 6. Ask for a fact found only in `test-a.txt`
 7. The app should refuse, not pull an answer out of the old file
 
-If it fails step 7, document isolation is not working yet.
+If step 7 fails, isolation's broken: the app answered from a file it should've deleted. How to fix: in `app.py`, find the `if st.session_state.file_id != current_file_id:` block. Right before it builds the new vector store, it should call `st.session_state.vector_store.delete_collection()` and reset `chat_history` to `[]`. If either of those is missing, or happens after the new file is indexed instead of before, that's the bug.
 
 ## Stack
 
