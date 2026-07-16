@@ -193,7 +193,6 @@ the-locker/
 - [ ] Multi-file uploads with synthesis across documents
 - [ ] Fix the JSON loader edge case — `jq_schema="."` currently stringifies entire nested JSON blobs into a single chunk instead of splitting sensibly
 - [ ] User-selected multi-file collections
-- [ ] Persistent local collections
 - [ ] OCR preprocessing for scanned PDFs
 - [ ] Page-level PDF citations
 - [ ] Retrieval test suite
