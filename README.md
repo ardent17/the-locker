@@ -4,7 +4,7 @@
 
 ![The Locker UI](assets/locker-screenshot.png)
 
-If you want to query your own documents without handing them to somebody else's cloud, this is for you. The Locker runs entirely on your machine with local models: teeny-weeny environmental footprint, no API key, no upload leaving your computer. It's got a cute locker-themed UI, and a built-in hallucination guardrail, so if the file doesn't actually support an answer, it says so instead of making something up.
+If you want to query your own documents without handing them to somebody else's cloud, this is for you. The Locker runs entirely on your machine with local models: teeny-weeny environmental footprint, no API key, no upload leaving your computer. It's got a cute locker-themed UI, and a built-in hallucination guardrail: The Locker instructs the local model to refuse when the retrieved excerpts do not support an answer, and shows the retrieved excerpts so you can check the answer yourself.
 
 It handles one active source at a time. It shows you what it found and roughly where it came from. It tells you when there's not enough evidence to answer. And when a conversation's actually worth keeping, you can export it — receipts included — as the one deliberate moment data leaves the app.
 
@@ -24,7 +24,7 @@ A small RAG app built around these principles:
 - Admitting when there is not enough evidence to answer
 - Making the state of the app visible instead of magical
 
-It only answers from the source you just gave it. Nothing is saved, nothing is inherited from past documents, and nothing leaves the app unless you export it.
+Each new source gets a fresh retrieval collection and clears the prior chat session. The answer prompt instructs the model to use only retrieved excerpts from that active source. Nothing is saved, nothing is inherited from past documents, and nothing leaves the app unless you export it.
 
 ## What it does
 
@@ -34,7 +34,7 @@ It only answers from the source you just gave it. Nothing is saved, nothing is i
 - Uses Ollama for local embeddings and chat
 - Creates a fresh Chroma collection for every new source
 - Clears old chat state when the active source changes
-- Re-runs retrieval from scratch on every turn against that ephemeral collection — chat memory makes follow-ups fluid without ever giving the model a way to answer from outside what was just retrieved
+- Re-runs retrieval from scratch on every turn against that ephemeral collection: follow-up questions use local chat history for conversational references, while every turn reruns retrieval against the active source
 - Lets you inspect retrieved chunks, including page numbers for PDFs and item paths for JSON, so you're never taking the answer on faith
 - Gives an explicit refusal when the source doesn't contain the answer
 - Deletes the temporary upload copy after indexing (pasted text never touches disk at all — it's embedded straight from memory)
@@ -47,7 +47,7 @@ If The Locker can't find enough evidence in the active source, it should say:
 ```text
 NO RECEIPTS IN THIS LOCKER.
 
-I couldn't verify that from the active file.
+I couldn’t verify that from the retrieved excerpts.
 ```
 
 ## Privacy
@@ -62,8 +62,7 @@ The point is that this runs on your machine.
 - Vector data stays **in memory only** — there's no `persist_directory` set, so every collection is gone the moment the Streamlit process restarts, not just when you hit "Empty Locker"
 - Clearing the locker deletes the active collection and chat history
 - Exporting the chat is the only point where data leaves the app, and it only happens when you click the button
-
-*caveat* That does not mean "secure in every imaginable deployment." Please don't tunnel this onto the public internet (ngrok, port forwarding, etc.) without adding auth in front of it. I believe in you, but still.
+- The Locker is designed for local, single-user use. That does not mean "secure in every imaginable deployment." It does not encrypt files at rest, secure the host computer, protect against malware, guarantee model behavior, or make a publicly exposed Streamlit server safe - so please don't tunnel this onto the public internet (ngrok, port forwarding, etc.) without adding auth in front of it!
 
 ## Setup
 

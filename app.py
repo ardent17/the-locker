@@ -418,7 +418,7 @@ def build_rag_chain(docs, filename: str, file_id: str):
         "below. You can count, summarize, compare, and combine information from "
         "multiple excerpts when the answer is present in them.\n\n"
         "If the excerpts do not contain the answer, say: "
-        "\"I couldn't verify that from the active file.\"\n\n"
+        "\"“I couldn't verify that from the retrieved excerpts.”\"\n\n"
         "Retrieved excerpts:\n{context}"
         ),
         MessagesPlaceholder("chat_history"),
